@@ -166,7 +166,7 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    sh 'docker run -itd -p 8081:80 dockerfile'
+                    sh 'docker run -itd --name nginx -p 8081:80 dockerfile'
                 }
             }
         }
@@ -193,7 +193,7 @@ This specifies that the pipeline can run on any available agent (an agent can ei
 **Stages:**
 
 ```
-stages {"\n      // Stages go here\n   "}
+The pipeline is divided into three stages:
 ```
 
 This defines the various stages of the pipeline, each representing a phase in the software delivery process.
@@ -201,8 +201,16 @@ This defines the various stages of the pipeline, each representing a phase in th
 **Stage 1: Connect to Github:**
 
 ```
-stage('Connect To Github') {"\n      steps {\n         checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Oladeji-Okuns/jenkins-scm.git']])\n      "}
+stage('Connect To Github') {
+    steps {
+        checkout scmGit(
+            branches: [[name: '*/main']],
+            extensions: [],
+            userRemoteConfigs: [[url: 'https://github.com/Oladeji-Okuns/jenkins-scm.git']]
+        )
+    }
 }
+
 ```
 - This stage checks out the source code from a GitHub repository (https://github.com/Oladeji-Okuns/jenkins-scm.git). <br>
 - It also specifies that the pipeline should use the 'main' branch.
@@ -210,24 +218,36 @@ stage('Connect To Github') {"\n      steps {\n         checkout scmGit(branches:
 **Stage 2: Build Docker Image**
 
 ```
-stage('Build Docker Image') {"\n      steps {\n         script {\n            sh 'docker build -t dockerfile .'\n         "}
-   }
+stage('Build Docker Image') {
+    steps {
+        script {
+            sh 'docker build -t dockerfile .'
+        }
+    }
 }
+
 ```
 
 - This stage builds a Docker image named 'dockerfile' using the source code obtained from the GitHub repository. <br>
-- The **`docker build`** command is executed using the shell (**`sh`**)
+- The **`docker build`** command is executed using the shell (**`sh`**) and it used the **current directory** (.) as the build context.
 
 **Stage 3: Run Docker Container:**
 
 ```
-stage('Run Docker Container') {"\n      steps {\n         script {\n            sh 'docker run -itd --name nginx -p 8081:80 dockerfile'\n         "}
-   }
+stage('Run Docker Container') {
+    steps {
+        script {
+            sh 'docker run -itd --name nginx -p 8081:80 dockerfile'
+        }
+    }
 }
+
 ```
-- This stage runs a Docker container named `nginx` in detached mode (`-itd`).
-- The container is mapped to port 8081 on the host machine (`-p 8081:80`).
-- The Docker image used is the one built in the previous stage ('dockerfile').
+- This stage runs a new Docker container named `nginx` in detached mode (`-itd`) from the built image.
+- The container runs in detached and interactive mode (-itd).
+- Port 8081 on the host is mapped to port 80 inside the container (-p 8081:80). Meaning the container is mapped to port 8081 on the host machine (**`-p 8081:80`**)
+- The docker image used is the one built in the previous stage (`dockerfile`)
+
 <br>
 <br>
 
